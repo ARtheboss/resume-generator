@@ -15,9 +15,14 @@ def generate_from_config(conf, output_file_name):
 	# TITLE
 
 	pdf.current_y += 15
-	pdf.set_font("body", size=23)
+	pdf.set_font("body", size=30)
 	width = pdf.get_string_width("Advay Ratan")
 	pdf.text(PAGE_WIDTH / 2, txt="Advay Ratan", align=0)
+	pdf.current_y += 8
+
+
+	pdf.set_font("body italic", size=15)
+	pdf.text(PAGE_WIDTH / 2, txt=conf.SUMMARY, align=0)
 	pdf.current_y += 8
 
 	# CONTACT INFO
@@ -25,11 +30,11 @@ def generate_from_config(conf, output_file_name):
 	widths = [pdf.get_string_width(ci) for ci in conf.CONTACT_INFO]
 	gaps = (PAGE_WIDTH - (MARGIN - 2) * 2 - sum(widths)) / (len(conf.CONTACT_INFO) - 1)
 	for i, ci in enumerate(conf.CONTACT_INFO):
-		pdf.text(MARGIN - 2 + gaps * i + sum(widths[:i]), txt=ci)
+		pdf.text(MARGIN - 2 + gaps * i + sum(widths[:i]), txt=ci, link=("." in ci))
 	pdf.set_font_size(BODY_FONT_SIZE)
 
 	# EDUCATION
-	pdf.current_y += BODY_LINE_HEIGHT * 2
+	pdf.current_y += BODY_LINE_HEIGHT
 	pdf.section_title("EDUCATION")
 
 	coursework_s = ", ".join(conf.COURSEWORK)
@@ -48,7 +53,7 @@ def generate_from_config(conf, output_file_name):
 		cont += f"*{k}*: {s}; "
 
 	pdf.content(
-		body=cont,
+		body=cont[:-2] + ".",
 		)
 
 	# projects

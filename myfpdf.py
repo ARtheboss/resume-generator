@@ -130,10 +130,11 @@ class MyFPDF(FPDF):
 
 
 
-	def text(self, x, txt="EMPTY", adjust_y=False, line_height=BODY_LINE_HEIGHT, align=-1, max_width=TEXT_SPACE):
+	def text(self, x, txt="EMPTY", adjust_y=False, line_height=BODY_LINE_HEIGHT, align=-1, max_width=TEXT_SPACE, link=False):
 		'''
 		cannot center align partly bolded text
 		'''
+		start_y = self.current_y
 		tmp_y = self.current_y
 		work_order, line_lengths = self._parse_complex_string(txt, max_width=max_width)
 		curr_x = x
@@ -142,6 +143,8 @@ class MyFPDF(FPDF):
 		italicized = ""
 		if align == 1:
 			curr_x -= line_lengths[curr_line]
+		if link:
+			FPDF.set_font(self, style="U")
 		for t in work_order: 
 			if t == 0:
 				curr_x = x
@@ -172,6 +175,11 @@ class MyFPDF(FPDF):
 				else:
 					FPDF.text(self, curr_x, tmp_y, txt=t)
 				curr_x += w
+
+		if link:
+			FPDF.link(self, x, start_y, max(line_lengths), tmp_y - start_y, link=txt)
+			FPDF.set_text_color(self, 0, 0, 0)
+
 		return max(line_lengths)
 	
 	def draw_seperator(self):
@@ -185,11 +193,11 @@ class MyFPDF(FPDF):
 		self.text(MARGIN, txt=text)
 		self.draw_seperator()
 
-	def content(self, body="", meta=""):
+	def content(self, body="", meta="", right_space=0):
 		
 		self.set_font_size(BODY_FONT_SIZE)
 		right_width = self.text(PAGE_WIDTH - MARGIN, txt=meta, align=1)
-		self.text(MARGIN, adjust_y=True, max_width=TEXT_SPACE-right_width, txt=body)
+		self.text(MARGIN, adjust_y=True, max_width=(TEXT_SPACE-right_width if right_space == 0 else TEXT_SPACE-right_space), txt=body)
 
 		self.current_y += BODY_LINE_HEIGHT
 
@@ -200,7 +208,7 @@ class MyFPDF(FPDF):
 			body = f"*_{position}_ | {company}*\n•"
 		body += "\n".join(bullets) + "•"
 		meta = f"*{dates}*\n{location}" 
-		self.content(body=body, meta=meta)
+		self.content(body=body, meta=meta, right_space=TEXT_SPACE / 5.8)
 		self.current_y += BODY_LINE_HEIGHT / 4
 
 

@@ -8,6 +8,7 @@ output_path = "/Users/home/Documents/Work/Generated Resumes"
 
 if not os.path.exists(output_path):
 	os.mkdir(output_path)
+	
 for c, o in config.__dict__.items():
 	if type(o) == type and o.RENDER and c != "BaseConfig":
 		folder_path = output_path + "/" + c
