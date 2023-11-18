@@ -21,9 +21,8 @@ def generate_from_config(conf, output_file_name):
 	pdf.current_y += 8
 
 
-	pdf.set_font("body italic", size=15)
-	pdf.text(PAGE_WIDTH / 2, txt=conf.SUMMARY, align=0)
-	pdf.current_y += 8
+	# pdf.set_font("body italic", size=15)
+	# pdf.text(PAGE_WIDTH / 2, txt=conf.SUMMARY, align=0)
 
 	# CONTACT INFO
 	pdf.set_font("body", size=10)
@@ -32,6 +31,7 @@ def generate_from_config(conf, output_file_name):
 	for i, ci in enumerate(conf.CONTACT_INFO):
 		pdf.text(MARGIN - 2 + gaps * i + sum(widths[:i]), txt=ci, link=("." in ci))
 	pdf.set_font_size(BODY_FONT_SIZE)
+	pdf.draw_seperator(space_after=False)
 
 	# EDUCATION
 	pdf.current_y += BODY_LINE_HEIGHT
@@ -40,30 +40,30 @@ def generate_from_config(conf, output_file_name):
 	coursework_s = ", ".join(conf.COURSEWORK)
 	pdf.content(
 		body=f"*University of California, Berkeley*\nB.S. in Electrical Engineering and Computer Science\n*Relevant Coursework:* {coursework_s}", 
-		meta=f"*Aug 2022 - {conf.GRAD_TERM}*\nBerkeley, CA\nGPA: {conf.GPA}", 
+		meta=f"Aug 2022 - {conf.GRAD_TERM}\nGPA: {conf.GPA}", 
 	)
 
 	# SKILLS
-	pdf.section_title("SKILLS")
+	pdf.section_title("TECHNICAL SKILLS")
 
 
 	cont = ""
 	for k, l in conf.SKILLS.items():
 		s = ", ".join(l)
-		cont += f"*{k}*: {s}; "
+		cont += f"*{k}*: {s}\n"
 
 	pdf.content(
-		body=cont[:-2] + ".",
+		body=cont[:-1] + ".",
 		)
 
 	# projects
-	pdf.section_title("HIGHLIGHTED PROJECTS & EXPERIENCE")
+	pdf.section_title("WORK EXPERIENCE & PROJECTS")
 
 	for p in conf.PROJ_EXP:
 		pdf.exp_content(**p)
 
 	# leadership
-	pdf.section_title("LEADERSHIP & EXTRACURRICULAR ACTIVITIES")
+	pdf.section_title("LEADERSHIP & EXTRACURRICULARS")
 
 	for e in conf.EC:
 		pdf.exp_content(**e)

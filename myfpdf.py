@@ -145,6 +145,8 @@ class MyFPDF(FPDF):
 			curr_x -= line_lengths[curr_line]
 		if link:
 			FPDF.set_font(self, style="U")
+		else:
+			FPDF.set_font(self, style="")
 		for t in work_order: 
 			if t == 0:
 				curr_x = x
@@ -182,10 +184,10 @@ class MyFPDF(FPDF):
 
 		return max(line_lengths)
 	
-	def draw_seperator(self):
+	def draw_seperator(self, space_after=True):
 		self.current_y += BODY_LINE_HEIGHT / 2
 		self.line(MARGIN - 2, self.current_y, PAGE_WIDTH - MARGIN + 2, self.current_y)
-		self.current_y += BODY_LINE_HEIGHT
+		self.current_y += BODY_LINE_HEIGHT if space_after else 0
 
 	def section_title(self, text):
 		self.set_font("body bold")
@@ -195,6 +197,7 @@ class MyFPDF(FPDF):
 
 	def content(self, body="", meta="", right_space=0):
 		
+		self.set_font("body")
 		self.set_font_size(BODY_FONT_SIZE)
 		right_width = self.text(PAGE_WIDTH - MARGIN, txt=meta, align=1)
 		self.text(MARGIN, adjust_y=True, max_width=(TEXT_SPACE-right_width if right_space == 0 else TEXT_SPACE-right_space), txt=body)
@@ -207,7 +210,7 @@ class MyFPDF(FPDF):
 		else:
 			body = f"*_{position}_ | {company}*\n•"
 		body += "\n".join(bullets) + "•"
-		meta = f"*{dates}*\n{location}" 
+		meta = f"{dates}\n{location}" 
 		self.content(body=body, meta=meta, right_space=TEXT_SPACE / 5.8)
 		self.current_y += BODY_LINE_HEIGHT / 4
 
