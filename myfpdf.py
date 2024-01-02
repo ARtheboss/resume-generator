@@ -1,11 +1,16 @@
 from fpdf import FPDF
-from constants import *
+import constants
 
 class MyFPDF(FPDF):
 
 	current_y = 0
+	line_count = 0
 
-	def _parse_complex_string(self, s, max_width=TEXT_SPACE):
+	def change_y(self, amount):
+		self.current_y += amount
+		self.line_count += amount / constants.BODY_LINE_HEIGHT
+
+	def _parse_complex_string(self, s, max_width=constants.TEXT_SPACE):
 		'''
 		Can take in * (bold), _ (italic), • (indentation) and \n for newlines
 		Returns (work order list
@@ -31,7 +36,7 @@ class MyFPDF(FPDF):
 				work_order.append(0)
 				line_lengths.append(self.get_string_width(curr_line))
 				if indented:
-					curr_line = BULLET_STR
+					curr_line = constants.BULLET_STR
 					work_order.append(curr_line)
 				else:
 					curr_line = ""
@@ -65,8 +70,8 @@ class MyFPDF(FPDF):
 				else:
 					indented = True
 					# work_order.append(3.0)
-					work_order.append(BULLET_STR)
-					curr_line = BULLET_STR
+					work_order.append(constants.BULLET_STR)
+					curr_line = constants.BULLET_STR
 			elif self.get_string_width(curr_line) >= max_width:
 				last_space = curr_line.rfind(" ")
 				curr_s_ind = last_space - len(curr_line)
@@ -90,14 +95,14 @@ class MyFPDF(FPDF):
 						# new order: first, new_line (where space was), second
 						work_order[wo_pos] = first_part
 						if indented:
-							second_part = BULLET_GAP + second_part
+							second_part = constants.BULLET_GAP + second_part
 						work_order.insert(wo_pos + 1, second_part)
 						work_order.insert(wo_pos + 1, 0)
 
 						# curr line is everything moved after new new_line
 						curr_line = "".join([item for item in work_order[wo_pos + 2:] if type(item) == str])
 						if indented:
-							curr_line = BULLET_GAP + curr_line
+							curr_line = constants.BULLET_GAP + curr_line
 						# but everything in curr_line has been handled (already in work_order)
 						curr_s = c
 					else:
@@ -107,8 +112,8 @@ class MyFPDF(FPDF):
 						curr_s = curr_s[curr_s_ind + 1:] + c
 						curr_line = curr_line[last_space + 1:] + c
 						if indented:
-							curr_line = BULLET_GAP + curr_line
-							work_order.append(BULLET_GAP)
+							curr_line = constants.BULLET_GAP + curr_line
+							work_order.append(constants.BULLET_GAP)
 				else:
 					if c == " ":
 						c = "" # don't start newline with space
@@ -118,8 +123,8 @@ class MyFPDF(FPDF):
 					curr_s = c
 					curr_line = c
 					if indented:
-						curr_line = BULLET_GAP + curr_line
-						work_order.append(BULLET_GAP)
+						curr_line = constants.BULLET_GAP + curr_line
+						work_order.append(constants.BULLET_GAP)
 			else:
 				curr_s += c
 				curr_line += c
@@ -130,10 +135,11 @@ class MyFPDF(FPDF):
 
 
 
-	def text(self, x, txt="EMPTY", adjust_y=False, line_height=BODY_LINE_HEIGHT, align=-1, max_width=TEXT_SPACE, link=False):
+	def text(self, x, txt="EMPTY", adjust_y=False, line_height=None, align=-1, max_width=constants.TEXT_SPACE, link=False):
 		'''
 		cannot center align partly bolded text
 		'''
+		line_height = line_height or constants.BODY_LINE_HEIGHT
 		start_y = self.current_y
 		tmp_y = self.current_y
 		work_order, line_lengths = self._parse_complex_string(txt, max_width=max_width)
@@ -154,7 +160,7 @@ class MyFPDF(FPDF):
 				if align == 1 and curr_line < len(line_lengths):
 					curr_x -= line_lengths[curr_line]
 				if adjust_y:
-					self.current_y += line_height
+					self.change_y(line_height)
 				tmp_y += line_height
 			elif t == 1.0:
 				bolded = " bold"
@@ -185,40 +191,48 @@ class MyFPDF(FPDF):
 		return max(line_lengths)
 	
 	def draw_seperator(self, space_after=True):
-		self.current_y += BODY_LINE_HEIGHT / 2
-		self.line(MARGIN - 2, self.current_y, PAGE_WIDTH - MARGIN + 2, self.current_y)
-		self.current_y += BODY_LINE_HEIGHT if space_after else 0
+		self.change_y(constants.BODY_LINE_HEIGHT / 2)
+		self.line(constants.MARGIN - 2, self.current_y, constants.PAGE_WIDTH - constants.MARGIN + 2, self.current_y)
+		self.change_y(constants.BODY_LINE_HEIGHT if space_after else 0)
 
 	def section_title(self, text):
 		self.set_font("body bold")
-		self.current_y += BODY_LINE_HEIGHT / 2
-		self.text(MARGIN, txt=text)
+		self.change_y(constants.BODY_LINE_HEIGHT / 2)
+		self.text(constants.MARGIN, txt=text)
 		self.draw_seperator()
 
 	def content(self, body="", meta="", right_space=0):
 		
 		self.set_font("body")
-		self.set_font_size(BODY_FONT_SIZE)
-		right_width = self.text(PAGE_WIDTH - MARGIN, txt=meta, align=1)
-		self.text(MARGIN, adjust_y=True, max_width=(TEXT_SPACE-right_width if right_space == 0 else TEXT_SPACE-right_space), txt=body)
+		self.set_font_size(constants.BODY_FONT_SIZE)
+		right_width = self.text(constants.PAGE_WIDTH - constants.MARGIN, txt=meta, align=1)
+		self.text(constants.MARGIN, adjust_y=True, max_width=(constants.TEXT_SPACE-right_width if right_space == 0 else constants.TEXT_SPACE-right_space), txt=body)
 
-		self.current_y += BODY_LINE_HEIGHT
+		self.change_y(constants.BODY_LINE_HEIGHT)
 
-	def exp_content(self, position="", company="", bullets=[], dates="", location=""):
-		if company == "":
-			body = f"*_{position}_*\n•"
+	def exp_content(self, **kw):
+		if not kw.get("company"):
+			body = f"*_{kw['position']}_*\n•"
 		else:
-			body = f"*_{position}_ | {company}*\n•"
-		body += "\n".join(bullets) + "•"
-		meta = f"{dates}\n{location}" 
-		self.content(body=body, meta=meta, right_space=TEXT_SPACE / 5.8)
-		self.current_y += BODY_LINE_HEIGHT / 4
+			body = f"*_{kw['position']}_ | {kw['company']}*\n•"
+		body += "\n".join(kw['bullets']) + "•"
+		meta = f"{kw.get('dates', '')}\n{kw.get('location', '')}" 
+		self.content(body=body, meta=meta, right_space=constants.TEXT_SPACE / 5.8)
+		self.change_y(constants.BODY_LINE_HEIGHT / 4)
+
+	def post_gen_height_analysis(self):
+		if self.current_y >= constants.PAGE_HEIGHT:
+			return -1
+		elif self.current_y >= constants.PAGE_HEIGHT * constants.MINIMUM_FILL_FACTOR:
+			return 0
+		else:
+			return (constants.PAGE_HEIGHT * constants.MINIMUM_FILL_FACTOR - self.current_y) / self.line_count + constants.BODY_LINE_HEIGHT
 
 
 if __name__ == "__main__":
 	pdf = MyFPDF()
 	pdf.add_page()
-	pdf.set_margin(MARGIN)
+	pdf.set_constants.margin(constants.MARGIN)
 	pdf.current_y += 100
 	pdf.add_font(family="body", fname="assets/Times New Roman.ttf")
 	pdf.add_font(family="body bold", fname="assets/Times New Roman Bold.ttf")
