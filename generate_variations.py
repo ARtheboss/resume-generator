@@ -26,7 +26,7 @@ else:
 	
 for n, c in configs.items():
 	folder_path = output_path + "/" + n
-	fn = folder_path + "/AdvayRatanResume.pdf"
+	fn = folder_path + "/" + c["OUTPUT_FILE_NAME"]
 	if not os.path.exists(folder_path):
 		os.mkdir(folder_path)
 	stat = generate_from_config(c, fn)

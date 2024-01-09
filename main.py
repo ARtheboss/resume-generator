@@ -3,6 +3,11 @@ import constants
 import config
 
 def generate_from_config(conf, output_file_name, body_line_height=None):
+	'''
+	Given a config object, use MyFPDF functions to generate entire resume and save to output_file_name
+	body_line_height argument is an optional adjustment to constants.BODY_LINE_HEIGHT
+	Will be automatically be used recursively by this function
+	'''
 
 	constants.BODY_LINE_HEIGHT = body_line_height or constants.ORIGINAL_BODY_LINE_HEIGHT
 
@@ -18,13 +23,9 @@ def generate_from_config(conf, output_file_name, body_line_height=None):
 
 	pdf.current_y += 15
 	pdf.set_font("body", size=30)
-	width = pdf.get_string_width("Advay Ratan")
-	pdf.text(constants.PAGE_WIDTH / 2, txt="Advay Ratan", align=0)
+	width = pdf.get_string_width(conf["NAME"])
+	pdf.text(constants.PAGE_WIDTH / 2, txt=conf["NAME"], align=0)
 	pdf.current_y += 8
-
-
-	# pdf.set_font("body italic", size=15)
-	# pdf.text(PAGE_WIDTH / 2, txt=conf['SUMMARY, align=0)
 
 	# CONTACT INFO
 	pdf.set_font("body", size=10)
@@ -39,9 +40,10 @@ def generate_from_config(conf, output_file_name, body_line_height=None):
 	pdf.change_y(constants.BODY_LINE_HEIGHT)
 	pdf.section_title("EDUCATION")
 
-	coursework_s = ", ".join(conf['COURSEWORK'])
+	coursework_s = ", ".join(conf['COURSEWORK']) if conf.get("COURSEWORK") else ""
+	certification_s = "\n*Certifications:* " + ", ".join(conf['CERTIFICATIONS']) if conf.get("CERTIFICATIONS") else ""
 	pdf.content(
-		body=f"*University of California, Berkeley*\nB.S. in Electrical Engineering and Computer Science\n*Relevant Coursework:* {coursework_s}", 
+		body=f"*{conf['UNIVERSITY']}*\n{conf['DEGREE']}\n*Relevant Coursework:* {coursework_s}{certification_s}", 
 		meta=f"Aug 2022 - {conf['GRAD_TERM']}\nGPA: {conf['GPA']}", 
 	)
 
@@ -81,4 +83,4 @@ def generate_from_config(conf, output_file_name, body_line_height=None):
 
 
 if __name__ == "__main__":
-	generate_from_config(config.BaseConfig, "AdvayRatanResume.pdf")
+	generate_from_config(config.BaseConfig, "TestResume.pdf")

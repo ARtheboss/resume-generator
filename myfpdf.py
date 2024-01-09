@@ -3,8 +3,8 @@ import constants
 
 class MyFPDF(FPDF):
 
-	current_y = 0
-	line_count = 0
+	current_y = 0 # y_counter to append to bottom
+	line_count = 0 # total # of 'lines', used to scale total length of resume
 
 	def change_y(self, amount):
 		self.current_y += amount
@@ -191,18 +191,26 @@ class MyFPDF(FPDF):
 		return max(line_lengths)
 	
 	def draw_seperator(self, space_after=True):
+		'''
+		long black line from left to right margin
+		'''
 		self.change_y(constants.BODY_LINE_HEIGHT / 2)
 		self.line(constants.MARGIN - 2, self.current_y, constants.PAGE_WIDTH - constants.MARGIN + 2, self.current_y)
 		self.change_y(constants.BODY_LINE_HEIGHT if space_after else 0)
 
 	def section_title(self, text):
+		'''
+		Eg. WORK EXPERIENCE with seperator underneath
+		'''
 		self.set_font("body bold")
 		self.change_y(constants.BODY_LINE_HEIGHT / 2)
 		self.text(constants.MARGIN, txt=text)
 		self.draw_seperator()
 
 	def content(self, body="", meta="", right_space=0):
-		
+		'''
+		fill in body with margins in mind 
+		'''
 		self.set_font("body")
 		self.set_font_size(constants.BODY_FONT_SIZE)
 		right_width = self.text(constants.PAGE_WIDTH - constants.MARGIN, txt=meta, align=1)
@@ -211,6 +219,9 @@ class MyFPDF(FPDF):
 		self.change_y(constants.BODY_LINE_HEIGHT)
 
 	def exp_content(self, **kw):
+		'''
+		takes an experience object and adapts it to be used with content function
+		'''
 		if not kw.get("company"):
 			body = f"*_{kw['position']}_*\n•"
 		else:
@@ -221,6 +232,12 @@ class MyFPDF(FPDF):
 		self.change_y(constants.BODY_LINE_HEIGHT / 4)
 
 	def post_gen_height_analysis(self):
+		'''
+		Detect overflows or too short
+		return -1 = overflow
+		return 0 = just right
+		return >0 = new body line height to make fill just right
+		'''
 		if self.current_y >= constants.PAGE_HEIGHT:
 			return -1
 		elif self.current_y >= constants.PAGE_HEIGHT * constants.MINIMUM_FILL_FACTOR:
@@ -229,15 +246,3 @@ class MyFPDF(FPDF):
 			return (constants.PAGE_HEIGHT * constants.MINIMUM_FILL_FACTOR - self.current_y) / self.line_count + constants.BODY_LINE_HEIGHT
 
 
-if __name__ == "__main__":
-	pdf = MyFPDF()
-	pdf.add_page()
-	pdf.set_constants.margin(constants.MARGIN)
-	pdf.current_y += 100
-	pdf.add_font(family="body", fname="assets/Times New Roman.ttf")
-	pdf.add_font(family="body bold", fname="assets/Times New Roman Bold.ttf")
-	pdf.add_font(family="body italic", fname="assets/Times New Roman Italic.ttf")
-	pdf.add_font(family="body bold italic", fname="assets/Times New Roman Bold Italic.ttf")
-	pdf.set_font("body", size=10)
-	pdf.content(body="*Languages*: Python, Java, C, C++, Javascript, PHP, MATLAB; *Web Development*: HTML/CSS, JQuery, React, Webpack, Django, Ruby on Rails; *App Development*: Flutter/Dart; *Game Development*: HTML5 Canvas, Unity; *Competive Programming*: USACO Gold; *Software Engineering*: Git, Jira, GitHub, GitLab;")
-	pdf.output("test.pdf")

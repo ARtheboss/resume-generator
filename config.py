@@ -1,155 +1,8 @@
-from copy import deepcopy
+from copy import deepcopy as dc
+from config_helpers import *
+from constants import PROJ_EXP, EC
 
-PROJ_EXP = "PROJ_EXP"
-EC = "EC"
-
-#######################################
-###  CONFIG MANIPULATION FUNCTIONS  ###
-#######################################
-
-'''
-Find index of an id in a list
-l: list of experiences, i: id
-'''
-def find_index(l, i):
-	f = -1
-	for ind, x in enumerate(l):
-		if x["id"] == i:
-			f = ind
-			break
-	return f
-
-'''
-Remove an id from list of experiences
-and return that experience. Return None
-if id does not exist.
-l: list of experiences, i: id
-'''
-def remove_id(l, i):
-	ind = find_index(l, i)
-	if ind == -1:
-		return None
-	else:
-		v = deepcopy(l[ind])
-		del l[ind]
-		return v
-
-'''
-In the list of experiences, order the exps
-with the given ids in that order. Keep rest
-at end in original order.
-'''
-def reorder(l, ids):
-	nl = []
-	for i in ids:
-		v = remove_id(l, i)
-		if not v:
-			continue
-		nl.append(v)
-	nl += l
-	return nl
-
-def reorder_cat(conf, cat, ids):
-	conf[cat] = reorder(conf[cat], ids)
-	return conf
-
-'''
-Given full config, move id to first in 
-either PROJ_EXP or EC.
-'''
-def move_id_to_first_conf(conf, i):
-	if find_index(conf[PROJ_EXP], i) >= 0:
-		return reorder_cat(conf, PROJ_EXP, [i])
-	else:
-		return reorder_cat(conf, EC, [i])
-
-'''
-Given full config, remove gien id
-'''
-def remove_id_conf(conf, i):
-	if find_index(conf[PROJ_EXP], i) >= 0:
-		remove_id(conf[PROJ_EXP], i)
-	else:
-		remove_id(conf[EC], i)
-	return conf
-
-'''
-s: skills list which contains tuples
-of (category, skill)
-'''
-def add_skills(conf, s):
-	for t in s:
-		conf["SKILLS"][t[0]].append(t[1])
-	return conf
-
-'''
-In list of skills in given cat,
-order skills (indexes in l)
-as given, keep rest at end in 
-original order.
-'''
-def reorder_skills(conf, cat, l):
-	nl = []
-	for i in l:
-		nl.append(conf["SKILLS"][cat][i])
-	for x in conf["SKILLS"][cat]:
-		if x not in l:
-			nl.append(x)
-	conf["SKILLS"][cat] = nl
-	return conf
-
-
-def add_exp_at_pos(conf, cat, e, i):
-	conf[cat].insert(i, e)
-	return conf
-
-def append_exp(conf, cat, e):
-	conf[cat].append(e)
-	return conf
-
-def prepend_exp(conf, cat, e):
-	return add_exp_at_pos(conf, cat, e, 0)
-
-def add_coursework(conf, courses):
-	conf["COURSEWORK"] += courses
-	return conf
-
-
-####################################
-###  EXP MANIPULATION FUNCTIONS  ###
-####################################
-
-def replace_of_id(conf, i, n):
-	x = find_index(conf[PROJ_EXP], i)
-	y = -1
-	if x == -1:
-		y = find_index(conf[EC], i)
-
-	if x != -1:
-		conf[PROJ_EXP][x] = n
-	if y != -1:
-		conf[EC][y] = n
-	return conf
-
-'''
-Change bullet completely based on params
-i: exp id
-b_l: bullet list, containing ways to change 
-old bullet. Integers in list reference old bullets
-and text represent new ones.
-'''
-def change_bullet(i, b_l):
-	e = deepcopy(es[i])
-	nbl = []
-	for x in b_l:
-		if type(x) == int:
-			nbl.append(es[i]["bullets"][x])
-		else:
-			nbl.append(x)
-	e["bullets"] = nbl
-	return e
-
-es = {
+exps = {
 	"fractal": {
 		"id": "fractal",
 		"position": "Project Intern",
@@ -264,6 +117,7 @@ es = {
 		"id": "sc",
 		"position": "Administrative Co-ordinator",
 		"company": "Residential Life Safety Program",
+		"location": "Berkeley, CA",
 		"bullets": [
 			"Collaborating in team of 8 to manage 150+ student employees with nightly shifts"
 			],
@@ -315,43 +169,47 @@ es = {
 	}
 }
 
-safetycoordinator_automation = change_bullet("sc", [0, "Built spreadsheet automations such as ingestion from Shiftboard API to cut admin work by 80%"])
-safetycoordinator_data = change_bullet("sc", [0, "Implemented standardized spreadsheet data collection to automate employee performance analysis"])
+safetycoordinator_automation = change_bullet(exps["sc"], [0, "Built spreadsheet automations such as ingestion from Shiftboard API to cut admin work by 80%"])
+safetycoordinator_data = change_bullet(exps["sc"], [0, "Implemented standardized spreadsheet data collection to automate employee performance analysis"])
 
-fractal_frontend = change_bullet("fractal", [0, "Exposed model via Streamlit UI on Microsoft Azure, accessed by 5+ projects within company",])
+fractal_frontend = change_bullet(exps["fractal"], [0, "Exposed model via Streamlit UI on Microsoft Azure, accessed by 5+ projects within company",])
 
-berkeleytime_data = change_bullet("berkeleytime", [0, "Updating legacy Django code to Express/Typescript for increased performance with GraphQL, using Kubernetes for deployment", "Wrote MongoDB backup & API data ingestion scripts, outperforming PostgreSQL version by 3x"])
-berkeleytime_infra = change_bullet("berkeleytime", [0, 1, "Provisioned MinIO S3 Docker volumes replicating prod CloudFlare R2 to facilitate development"])
+berkeleytime_data = change_bullet(exps["berkeleytime"], [0, "Updating legacy Django code to Express/Typescript for increased performance with GraphQL, using Kubernetes for deployment", "Wrote MongoDB backup & API data ingestion scripts, outperforming PostgreSQL version by 3x"])
+berkeleytime_infra = change_bullet(exps["berkeleytime"], [0, 1, "Provisioned MinIO S3 Docker volumes replicating prod CloudFlare R2 to facilitate development"])
 
-globesisters_infra = change_bullet("globesisters", [0, "Rewrote components to separate logic and UI for reliability and facilitating unit testing", "Led creation of first CI pipelines on GitLab, boosting development speed and eliminating merging of faulty code"])
+globesisters_infra = change_bullet(exps["globesisters"], [0, "Rewrote components to separate logic and UI for reliability and facilitating unit testing", "Led creation of first CI pipelines on GitLab, boosting development speed and eliminating merging of faulty code"])
 
 base_config = {
-		"OUTPUT_FILE_NAME": "AdvayRatanResume.pdf",
-		"CONTACT_INFO": ["(628) 255-0206", "advayratan@berkeley.edu", "advayratan.com", "linkedin.com/in/advay-ratan/", "Berkeley, CA"],
-		"GPA": "4.0",
-		"GRAD_TERM": "May 2026",
-		"COURSEWORK": ["Algorithms & Datastructures (Java)", "Computer Architecture (C)", "Discrete Math & Probability"],
-		"SKILLS": {
-					"Languages": ["Python", "C++", "C", "Java", "SQL", "HTML", "CSS"],
-					"Frameworks": [],
-					"Tools": ["Linux", "Microsoft Azure", "AWS", "Git"],
-				  },
-		PROJ_EXP: [
-			es["fractal"],
-			es["globesisters"],
-			es["nugit"],
-			es["timetrialracing"],
-		],
-		EC: [
-			es["coursestaff16a"],
-			es["csm61c"],
-			es["bfr"],
-			es["rha"],
-		]
-	}
+	"NAME": "Advay Ratan",
+	"UNIVERSITY": "University of California, Berkeley",
+	"DEGREE": "B.S. in Electrical Engineering and Computer Science",
+	"OUTPUT_FILE_NAME": "AdvayRatanResume.pdf",
+	"CONTACT_INFO": ["(628) 255-0206", "advayratan@berkeley.edu", "advayratan.com", "linkedin.com/in/advay-ratan/", "Berkeley, CA"],
+	"GPA": "4.0",
+	"GRAD_TERM": "May 2026",
+	"COURSEWORK": ["Algorithms & Datastructures (Java)", "Computer Architecture (C)", "Discrete Math & Probability"],
+	"CERTIFICATIONS": ["AWS Certified Developer - Associate"],
+	"SKILLS": {
+				"Languages": ["Python", "C++", "C", "Java", "SQL", "HTML", "CSS"],
+				"Frameworks": [],
+				"Tools": ["Linux", "Microsoft Azure", "AWS", "Git"],
+			  },
+	PROJ_EXP: [
+		exps["fractal"],
+		exps["globesisters"],
+		exps["nugit"],
+		exps["timetrialracing"],
+	],
+	EC: [
+		exps["coursestaff16a"],
+		exps["csm61c"],
+		exps["bfr"],
+		exps["rha"],
+	]
+}
 
 def base():
-	return deepcopy(base_config)
+	return dc(base_config)
 
 def g2025(config):
 	config["GRAD_TERM"] = "May 2025"
@@ -381,7 +239,7 @@ def software(config):
 
 def berkeleytime(config):
 	return add_skills(
-		prepend_exp(config, PROJ_EXP, es["berkeleytime"]),[
+		prepend_exp(config, PROJ_EXP, exps["berkeleytime"]),[
 		("Languages", "GraphQL"),
 		("Frameworks", "Express"),
 		("Tools", "Kubernetes"),
@@ -389,74 +247,61 @@ def berkeleytime(config):
 		("Tools", "Redis"),
 	])
 
-def main2026(config):
-	return remove_id_conf(berkeleytime(prepend_exp(software(config), EC, safetycoordinator_automation)), "csm61c")
+main2026 = remove_id_conf(berkeleytime(prepend_exp(software(base()), EC, safetycoordinator_automation)), "csm61c")
 
-def main(config):
-	return g2025(main2026(config))
+main = g2025(dc(main2026))
 
-def infra(config):
-	return replace_of_id(replace_of_id(main(config), "globesisters", globesisters_infra), "berkeleytime", berkeleytime_infra)
+infra = replace_of_id(replace_of_id(dc(main), "globesisters", globesisters_infra), "berkeleytime", berkeleytime_infra)
 
-def frontend(config):
-	return replace_of_id(
-		add_skills(
-			remove_id_conf(
-				prepend_exp(
-					software(config), EC, safetycoordinator_automation
-				), "csm61c"),
-			[
+def frontend_skills(config):
+	return add_skills(config, [
 				("Tools", "Figma"),
 				("Tools", "Webpack"),
 				("Languages", "Sass")
-			]),
-		"fractal",
-		fractal_frontend
-		)
+			])
 
-def data_engineering(config):
-	return add_skills(
-		replace_of_id(
-			remove_id_conf(
-				append_exp(
-					replace_of_id(main(config), "sc", safetycoordinator_data), 
-					PROJ_EXP, 
-					es["rookiedb"]
-				), 
-				"globesisters"), 
-			"berkeleytime", 
-			berkeleytime_data
-			),
-		[("Tools", "Apache Airflow"),]
-		)
+frontend = frontend_skills(replace_of_id(
+	remove_id_conf(
+		prepend_exp(
+			software(base()), EC, safetycoordinator_automation
+		), "csm61c"),
+	"fractal",
+	fractal_frontend
+))
 
-def backend(config):
-	return remove_id_conf(main(config), "globesisters")
+data_engineering = add_skills(
+	replace_of_id(
+		remove_id_conf(
+			append_exp(
+				replace_of_id(dc(main), "sc", safetycoordinator_data), 
+				PROJ_EXP, 
+				exps["rookiedb"]
+			), 
+			"globesisters"), 
+		"berkeleytime", 
+		berkeleytime_data
+		),
+	[("Tools", "Apache Airflow"),]
+)
 
-def automation(config):
-	config["PROJ_EXP"].append(es["fantasyautoroster"])
-	return config
+backend = remove_id_conf(dc(main), "globesisters")
 
-def java(config):
-	# move java to front of list
-	return reorder_skills(append_exp(backend(config), PROJ_EXP, es["rookiedb"]), "Languages", [3])
+# move java to front of list
+java = reorder_skills(append_exp(dc(backend), PROJ_EXP, exps["rookiedb"]), "Languages", [3])
 
-def go(config):
-	# move go to front of list
-	return reorder_skills(append_exp(backend(config), PROJ_EXP, es["familytree"]), "Languages", [9])
+# move go to front of list
+go = reorder_skills(append_exp(dc(backend), PROJ_EXP, exps["familytree"]), "Languages", [9])
 
-def graphics(config):
-	return add_coursework(
-			prepend_exp(
-				main(config),
-				PROJ_EXP,
-				es["3d"]
-			),	
-			["Linear Algebra"],
-		)
+graphics = remove_id_conf(add_coursework(
+	prepend_exp(
+		dc(main),
+		PROJ_EXP,
+		exps["3d"]
+	),	
+	["Linear Algebra"],
+), "sc")
 
-def gaming(config):
-	return move_id_to_first_conf(graphics(config), "timetrialracing")
+gaming = move_id_to_first_conf(dc(graphics), "timetrialracing")
 
 def ee105(config):
 	return add_coursework(
@@ -471,31 +316,32 @@ def ee105(config):
 		)
 
 def c(config):
-	return prepend_exp(config, PROJ_EXP, es["c"])
+	return prepend_exp(config, PROJ_EXP, exps["c"])
 
-def computer_architecture(config):
-	return ee105(c(
-		move_id_to_first_conf(
-			prepend_exp(
-				remove_id_conf(config, "nugit"), 
-				PROJ_EXP, 
-				es["berkeleytime"]), 
-			"csm61c"
-		)
-	))
+computer_architecture = ee105(c(
+	move_id_to_first_conf(
+		prepend_exp(
+			remove_id_conf(base(), "nugit"), 
+			PROJ_EXP, 
+			exps["berkeleytime"]), 
+		"csm61c"
+	)
+))
 
+fullstack = frontend_skills(main)
 
 configs = {
-	"main": main(base()),
-	"main2026": main2026(base()),
-	"frontend": frontend(base()),
-	"app_dev": move_id_to_first_conf(main(base()), "globesisters"),
-	"data_engineering": data_engineering(base()),
-	"databases": move_id_to_first_conf(data_engineering(base()), "rookiedb"),
-	"java": java(base()),
-	"go": go(base()),
-	"infra": infra(base()),
-	"graphics": graphics(base()),
-	"gaming": gaming(base()),
-	"computer_architecture": computer_architecture(base()),
+	"main": main,
+	"main2026": main2026,
+	"frontend": frontend,
+	"app_dev": move_id_to_first_conf(main, "globesisters"),
+	"data_engineering": data_engineering,
+	"databases": move_id_to_first_conf(data_engineering, "rookiedb"),
+	"java": java,
+	"go": go,
+	"infra": infra,
+	"graphics": graphics,
+	"gaming": gaming,
+	"computer_architecture": computer_architecture,
+	"fullstack": fullstack,
 }
