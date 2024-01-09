@@ -77,7 +77,7 @@ def generate_from_config(conf, output_file_name, body_line_height=None):
 	stat = pdf.post_gen_height_analysis()
 	if stat == -1 or stat == 0:
 		pdf.output(output_file_name)
-		return stat
+		return constants.BODY_LINE_HEIGHT if stat == 0 else stat
 	else:
 		return generate_from_config(conf, output_file_name, stat)
 

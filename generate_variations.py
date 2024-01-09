@@ -2,9 +2,9 @@ import os, shutil
 
 from config import configs
 from main import generate_from_config
+from constants import BODY_LINE_HEIGHT
 
-# output_path = "output"
-output_path = "/Users/home/Documents/Work/Generated Resumes"
+output_path = "output" # Change this load into specific folder on your computer
 
 os.umask(0)
 
@@ -30,7 +30,10 @@ for n, c in configs.items():
 	if not os.path.exists(folder_path):
 		os.mkdir(folder_path)
 	stat = generate_from_config(c, fn)
-	if stat == 0:
-		print(f"Created: {n}")
-	else:
+	if stat == -1:
 		print(f"Created {YELLOW}(overflowing){ENDC}: {n}")
+	else:
+		if stat > BODY_LINE_HEIGHT * 2:
+			print(f"Created {YELLOW}(add more content){ENDC}: {n}")
+		else:
+			print(f"Created: {n}")
